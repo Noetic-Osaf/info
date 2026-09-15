@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connection Info</title>
+
 <style>
   :root {
     --bg: #0f1220;
@@ -12,8 +13,14 @@
     --text: #e7e9f5;
     --muted: #9aa0b8;
     --border: #2a2f4a;
+    --success: #5fd38a;
+    --danger: #ff6b6b;
   }
-  * { box-sizing: border-box; }
+
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -22,9 +29,11 @@
     justify-content: center;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, sans-serif;
     padding: 24px;
   }
+
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -32,19 +41,31 @@
     padding: 32px;
     max-width: 420px;
     width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   }
-  h1 { font-size: 20px; margin: 0 0 8px; }
-  p.desc { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 20px; }
+
+  h1 {
+    font-size: 20px;
+    margin: 0 0 8px;
+  }
+
+  p.desc {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+
   .notice {
-    background: rgba(108,139,255,0.08);
-    border: 1px solid rgba(108,139,255,0.25);
+    background: rgba(108, 139, 255, 0.08);
+    border: 1px solid rgba(108, 139, 255, 0.25);
     border-radius: 10px;
     padding: 12px 14px;
     font-size: 13px;
     line-height: 1.5;
     margin-bottom: 20px;
   }
+
   button {
     width: 100%;
     padding: 14px;
@@ -56,112 +77,385 @@
     font-weight: 600;
     cursor: pointer;
   }
-  button:disabled { opacity: 0.6; cursor: default; }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
   button.secondary {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--muted);
     margin-top: 10px;
   }
-  .result { margin-top: 20px; display: none; }
+
+  .result {
+    margin-top: 20px;
+    display: none;
+  }
+
   .row {
     display: flex;
     justify-content: space-between;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
     font-size: 14px;
+    gap: 20px;
   }
-  .row:last-child { border-bottom: none; }
-  .label { color: var(--muted); }
-  .value { font-weight: 500; text-align: right; }
-  .status { font-size: 13px; color: var(--muted); margin-top: 14px; text-align: center; }
+
+  .row:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    color: var(--muted);
+  }
+
+  .value {
+    font-weight: 500;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  .status {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 14px;
+    text-align: center;
+  }
+
+  .loading {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 10px 0;
+  }
 </style>
 </head>
-<body>
-  <div class="card">
-    <h1>Connection info request</h1>
-    <p class="desc">This page can look up your public IP address, internet provider (ISP), and approximate city-level location (not your exact address or GPS position). It's based purely on your IP address, the same way any website can see this.</p>
-    <div class="notice">
-      If you tap "Show my info", the result will be displayed to you here, and a copy will also be sent to the person who sent you this link.
-    </div>
-    <button id="consentBtn">Show my info</button>
-    <button id="declineBtn" class="secondary">No thanks</button>
 
-    <div class="result" id="result">
-      <div class="row"><span class="label">IP Address</span><span class="value" id="ip">—</span></div>
-      <div class="row"><span class="label">ISP / Org</span><span class="value" id="isp">—</span></div>
-      <div class="row"><span class="label">City</span><span class="value" id="city">—</span></div>
-      <div class="row"><span class="label">Region</span><span class="value" id="region">—</span></div>
-      <div class="row"><span class="label">Country</span><span class="value" id="country">—</span></div>
-    </div>
-    <div class="status" id="status"></div>
+<body>
+
+<div class="card">
+
+  <h1>Connection info request</h1>
+
+  <p class="desc">
+    This page can look up your public IP address, internet provider (ISP),
+    and approximate city-level location. It does not access your exact
+    address or GPS position.
+  </p>
+
+  <div class="notice">
+    Your connection information will be looked up automatically when this
+    page loads. Nothing will be sent to the link owner unless you choose
+    to send it.
   </div>
 
+  <!-- Loading message -->
+  <div class="loading" id="loading">
+    Looking up your connection information…
+  </div>
+
+  <!-- Result -->
+  <div class="result" id="result">
+
+    <div class="row">
+      <span class="label">IP Address</span>
+      <span class="value" id="ip">—</span>
+    </div>
+
+    <div class="row">
+      <span class="label">ISP / Org</span>
+      <span class="value" id="isp">—</span>
+    </div>
+
+    <div class="row">
+      <span class="label">City</span>
+      <span class="value" id="city">—</span>
+    </div>
+
+    <div class="row">
+      <span class="label">Region</span>
+      <span class="value" id="region">—</span>
+    </div>
+
+    <div class="row">
+      <span class="label">Country</span>
+      <span class="value" id="country">—</span>
+    </div>
+
+  </div>
+
+  <!-- Buttons -->
+  <button id="sendBtn" disabled>
+    Send my info
+  </button>
+
+  <button id="declineBtn" class="secondary">
+    No thanks
+  </button>
+
+  <div class="status" id="status"></div>
+
+</div>
+
+
 <script>
-// ---- CONFIGURE THIS ----
-// Set this to your Formspree endpoint (or any webhook URL that accepts a JSON POST).
-// Example after creating a form at https://formspree.io: "https://formspree.io/f/xxxxxxx"
+
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
+
+// Put your Formspree/webhook endpoint here.
+//
+// Example:
+// const WEBHOOK_URL = "https://formspree.io/f/xxxxxxxx";
+//
 const WEBHOOK_URL = "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE";
-// -------------------------
 
-const consentBtn = document.getElementById('consentBtn');
-const declineBtn = document.getElementById('declineBtn');
-const resultEl = document.getElementById('result');
-const statusEl = document.getElementById('status');
 
-declineBtn.addEventListener('click', () => {
-  statusEl.textContent = 'No data was collected.';
-  consentBtn.disabled = true;
-  declineBtn.disabled = true;
-});
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
 
-consentBtn.addEventListener('click', async () => {
-  consentBtn.disabled = true;
-  declineBtn.disabled = true;
-  statusEl.textContent = 'Looking up your info…';
+const sendBtn = document.getElementById("sendBtn");
+const declineBtn = document.getElementById("declineBtn");
+
+const resultEl = document.getElementById("result");
+const loadingEl = document.getElementById("loading");
+const statusEl = document.getElementById("status");
+
+
+/* =========================================================
+   STORE LOOKUP DATA
+   ========================================================= */
+
+let connectionData = null;
+
+
+/* =========================================================
+   LOOK UP CONNECTION INFORMATION
+   ========================================================= */
+
+async function loadConnectionInfo() {
+
+  loadingEl.style.display = "block";
 
   try {
-    const res = await fetch('https://ipwho.is/');
-    if (!res.ok) throw new Error('Lookup failed');
-    const data = await res.json();
-    if (data.success === false) throw new Error(data.message || 'Lookup failed');
 
-    document.getElementById('ip').textContent = data.ip || '—';
-    document.getElementById('isp').textContent = (data.connection && data.connection.isp) || '—';
-    document.getElementById('city').textContent = data.city || '—';
-    document.getElementById('region').textContent = data.region || '—';
-    document.getElementById('country').textContent = data.country || '—';
-    resultEl.style.display = 'block';
+    const response = await fetch("https://ipwho.is/");
 
-    if (WEBHOOK_URL && WEBHOOK_URL !== "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE") {
-      try {
-        await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            ip: data.ip || null,
-            isp: (data.connection && data.connection.isp) || null,
-            city: data.city || null,
-            region: data.region || null,
-            country: data.country || null,
-            timestamp: new Date().toISOString()
-          })
-        });
-        statusEl.textContent = 'Done. This was sent to the link owner.';
-      } catch (sendErr) {
-        console.error('Webhook error:', sendErr);
-        statusEl.textContent = 'Shown above, but sending it failed.';
-      }
-    } else {
-      statusEl.textContent = 'Shown above. (No webhook configured yet — nothing was sent.)';
+    if (!response.ok) {
+      throw new Error("IP lookup failed");
     }
-  } catch (err) {
-    console.error(err);
-    statusEl.textContent = 'Something went wrong looking up your info. Please try again.';
-    consentBtn.disabled = false;
-    declineBtn.disabled = false;
+
+    const data = await response.json();
+
+    if (data.success === false) {
+      throw new Error(data.message || "IP lookup failed");
+    }
+
+
+    /* ---------------------------------------------
+       Store data
+       --------------------------------------------- */
+
+    connectionData = {
+
+      ip: data.ip || null,
+
+      isp:
+        data.connection &&
+        data.connection.isp
+          ? data.connection.isp
+          : null,
+
+      city: data.city || null,
+
+      region: data.region || null,
+
+      country: data.country || null,
+
+      timestamp: new Date().toISOString()
+
+    };
+
+
+    /* ---------------------------------------------
+       Display data
+       --------------------------------------------- */
+
+    document.getElementById("ip").textContent =
+      connectionData.ip || "—";
+
+    document.getElementById("isp").textContent =
+      connectionData.isp || "—";
+
+    document.getElementById("city").textContent =
+      connectionData.city || "—";
+
+    document.getElementById("region").textContent =
+      connectionData.region || "—";
+
+    document.getElementById("country").textContent =
+      connectionData.country || "—";
+
+
+    /* ---------------------------------------------
+       Show result
+       --------------------------------------------- */
+
+    loadingEl.style.display = "none";
+
+    resultEl.style.display = "block";
+
+    sendBtn.disabled = false;
+
+    statusEl.textContent =
+      "Information loaded. Choose whether to send it.";
+
+
+  } catch (error) {
+
+    console.error("Lookup error:", error);
+
+    loadingEl.textContent =
+      "Unable to retrieve your connection information.";
+
+    statusEl.textContent =
+      "Please try again later.";
+
   }
+
+}
+
+
+/* =========================================================
+   SEND INFORMATION
+   ========================================================= */
+
+async function sendConnectionInfo() {
+
+  if (!connectionData) {
+
+    statusEl.textContent =
+      "Connection information is not available.";
+
+    return;
+
+  }
+
+
+  if (
+    !WEBHOOK_URL ||
+    WEBHOOK_URL === "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE"
+  ) {
+
+    statusEl.textContent =
+      "Webhook is not configured.";
+
+    return;
+
+  }
+
+
+  sendBtn.disabled = true;
+
+  declineBtn.disabled = true;
+
+  statusEl.textContent =
+    "Sending your information…";
+
+
+  try {
+
+    const response = await fetch(WEBHOOK_URL, {
+
+      method: "POST",
+
+      headers: {
+
+        "Content-Type": "application/json",
+
+        "Accept": "application/json"
+
+      },
+
+      body: JSON.stringify(connectionData)
+
+    });
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Webhook returned HTTP " + response.status
+      );
+
+    }
+
+
+    statusEl.textContent =
+      "Done. Your information was sent to the link owner.";
+
+
+  } catch (error) {
+
+    console.error("Webhook error:", error);
+
+    statusEl.textContent =
+      "The information was displayed, but sending failed.";
+
+    sendBtn.disabled = false;
+
+    declineBtn.disabled = false;
+
+  }
+
+}
+
+
+/* =========================================================
+   SEND BUTTON
+   ========================================================= */
+
+sendBtn.addEventListener("click", () => {
+
+  sendConnectionInfo();
+
 });
+
+
+/* =========================================================
+   DECLINE BUTTON
+   ========================================================= */
+
+declineBtn.addEventListener("click", () => {
+
+  connectionData = null;
+
+  sendBtn.disabled = true;
+
+  declineBtn.disabled = true;
+
+  statusEl.textContent =
+    "No information was sent.";
+
+});
+
+
+/* =========================================================
+   AUTOMATICALLY LOAD INFO WHEN PAGE OPENS
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  loadConnectionInfo();
+
+});
+
 </script>
+
 </body>
 </html>
