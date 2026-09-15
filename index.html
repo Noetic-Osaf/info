@@ -3,18 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connection Info</title>
+
+<title>Device & Connection Diagnostics</title>
 
 <style>
   :root {
     --bg: #0f1220;
     --card: #171b2e;
+    --card2: #1c2137;
     --accent: #6c8bff;
+    --success: #5fd38a;
+    --warning: #f4c95d;
     --text: #e7e9f5;
     --muted: #9aa0b8;
     --border: #2a2f4a;
-    --success: #5fd38a;
-    --danger: #ff6b6b;
   }
 
   * {
@@ -24,108 +26,73 @@
   body {
     margin: 0;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont,
-                 "Segoe UI", Roboto, sans-serif;
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      Arial,
+      sans-serif;
     padding: 24px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 700px;
+    margin: auto;
   }
 
   .card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 32px;
-    max-width: 480px;
-    width: 100%;
+    padding: 30px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   }
 
   h1 {
-    font-size: 20px;
     margin: 0 0 8px;
+    font-size: 23px;
   }
 
-  p.desc {
+  .description {
     color: var(--muted);
     font-size: 14px;
-    line-height: 1.5;
-    margin: 0 0 20px;
+    line-height: 1.6;
+    margin-bottom: 20px;
   }
 
   .notice {
     background: rgba(108, 139, 255, 0.08);
     border: 1px solid rgba(108, 139, 255, 0.25);
     border-radius: 10px;
-    padding: 12px 14px;
+    padding: 14px;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.6;
     margin-bottom: 20px;
   }
 
-  .location-notice {
-    background: rgba(95, 211, 138, 0.08);
-    border: 1px solid rgba(95, 211, 138, 0.25);
-    border-radius: 10px;
-    padding: 12px 14px;
-    font-size: 13px;
-    line-height: 1.5;
-    margin-top: 20px;
-  }
-
-  button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    background: var(--accent);
-    color: #0f1220;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  button:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  button.secondary {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    margin-top: 10px;
-  }
-
-  button.location {
-    background: transparent;
-    border: 1px solid var(--success);
-    color: var(--success);
-    margin-top: 10px;
-  }
-
-  .result {
-    margin-top: 20px;
-    display: none;
+  .section {
+    margin-top: 24px;
   }
 
   .section-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    margin-top: 24px;
     margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
 
   .row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
     gap: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42, 47, 74, 0.65);
+    font-size: 13px;
   }
 
   .row:last-child {
@@ -134,203 +101,573 @@
 
   .label {
     color: var(--muted);
+    flex-shrink: 0;
   }
 
   .value {
-    font-weight: 500;
     text-align: right;
     word-break: break-word;
+    font-weight: 500;
   }
 
-  .status {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 14px;
-    text-align: center;
+  .mono {
+    font-family: monospace;
+    font-size: 12px;
   }
 
   .loading {
     text-align: center;
     color: var(--muted);
-    font-size: 14px;
-    padding: 10px 0;
+    padding: 20px;
   }
 
-  .coordinates {
-    font-family: monospace;
+  button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  button:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .primary {
+    background: var(--accent);
+    color: #0f1220;
+  }
+
+  .location {
+    background: transparent;
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+
+  .secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .location-info {
+    background: rgba(95, 211, 138, 0.07);
+    border: 1px solid rgba(95, 211, 138, 0.2);
+    border-radius: 10px;
+    padding: 13px;
+    margin-top: 10px;
     font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .status {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 15px;
+  }
+
+  .success {
+    color: var(--success);
+  }
+
+  .warning {
+    color: var(--warning);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      padding: 12px;
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .row {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .value {
+      text-align: left;
+    }
   }
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<div class="container">
 
-  <h1>Connection info request</h1>
+  <div class="card">
 
-  <p class="desc">
-    This page can look up your public IP address, internet provider (ISP),
-    and approximate city-level location based on your IP address.
-  </p>
+    <h1>Device & Connection Diagnostics</h1>
 
-  <div class="notice">
-    Your IP-based connection information is looked up automatically when
-    this page loads. Device GPS/location is NOT accessed automatically.
+    <div class="description">
+      This page displays connection, browser, device, and network
+      information available to your browser. Device location is optional
+      and requires explicit browser permission.
+    </div>
+
+    <div class="notice">
+      <strong>Privacy information</strong><br>
+      IP-based information is obtained automatically. Your device's
+      precise location is never requested automatically. Location is
+      only requested if you press the location button and approve your
+      browser's permission request.
+    </div>
+
+
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
+
+    <div id="loading" class="loading">
+      Loading diagnostics...
+    </div>
+
+
+    <!-- =====================================================
+         DIAGNOSTICS
+         ===================================================== -->
+
+    <div id="diagnostics" class="hidden">
+
+
+      <!-- =================================================
+           IP / INTERNET
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          🌐 Internet & IP Information
+        </div>
+
+        <div class="row">
+          <span class="label">Public IP</span>
+          <span class="value mono" id="ip">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">ISP</span>
+          <span class="value" id="isp">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Organization</span>
+          <span class="value" id="organization">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">ASN</span>
+          <span class="value" id="asn">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Country</span>
+          <span class="value" id="country">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Country Code</span>
+          <span class="value" id="countryCode">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Region</span>
+          <span class="value" id="region">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">City</span>
+          <span class="value" id="city">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Postal Code</span>
+          <span class="value" id="postal">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">IP Latitude</span>
+          <span class="value" id="ipLatitude">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">IP Longitude</span>
+          <span class="value" id="ipLongitude">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Timezone</span>
+          <span class="value" id="ipTimezone">—</span>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           BROWSER
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          🌎 Browser Information
+        </div>
+
+        <div class="row">
+          <span class="label">Browser</span>
+          <span class="value" id="browser">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Platform</span>
+          <span class="value" id="platform">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">User Agent</span>
+          <span class="value mono" id="userAgent">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Language</span>
+          <span class="value" id="language">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Languages</span>
+          <span class="value" id="languages">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Browser Timezone</span>
+          <span class="value" id="browserTimezone">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Cookies Enabled</span>
+          <span class="value" id="cookies">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Do Not Track</span>
+          <span class="value" id="dnt">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Online Status</span>
+          <span class="value" id="online">—</span>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           SCREEN / DISPLAY
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          🖥️ Screen & Display
+        </div>
+
+        <div class="row">
+          <span class="label">Screen Resolution</span>
+          <span class="value" id="screenResolution">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Available Screen</span>
+          <span class="value" id="availableScreen">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Viewport</span>
+          <span class="value" id="viewport">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Pixel Ratio</span>
+          <span class="value" id="pixelRatio">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Color Scheme</span>
+          <span class="value" id="colorScheme">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Touch Support</span>
+          <span class="value" id="touch">—</span>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           HARDWARE
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          ⚙️ Device / Hardware Information
+        </div>
+
+        <div class="row">
+          <span class="label">CPU Cores</span>
+          <span class="value" id="cpuCores">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Device Memory</span>
+          <span class="value" id="deviceMemory">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Max Touch Points</span>
+          <span class="value" id="maxTouch">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">PDF Viewer</span>
+          <span class="value" id="pdfViewer">—</span>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           CONNECTION
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          📡 Network Connection
+        </div>
+
+        <div class="row">
+          <span class="label">Connection Type</span>
+          <span class="value" id="connectionType">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Effective Type</span>
+          <span class="value" id="effectiveType">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Downlink</span>
+          <span class="value" id="downlink">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">RTT</span>
+          <span class="value" id="rtt">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Data Saver</span>
+          <span class="value" id="saveData">—</span>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           PAGE INFORMATION
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          🔗 Page Information
+        </div>
+
+        <div class="row">
+          <span class="label">Current URL</span>
+          <span class="value mono" id="currentUrl">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Referrer</span>
+          <span class="value mono" id="referrer">—</span>
+        </div>
+
+        <div class="row">
+          <span class="label">Page Protocol</span>
+          <span class="value" id="protocol">—</span>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           GPS LOCATION
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          📍 Device Location
+        </div>
+
+        <div class="location-info">
+
+          <strong>Optional device location</strong>
+
+          <br><br>
+
+          Your browser can request the location provided by your
+          device. Depending on the device and environment, this can
+          use GPS, Wi-Fi, mobile networks, or other location services.
+
+          <br><br>
+
+          Location is NOT requested automatically. Press the button
+          below if you want to provide your device location.
+
+        </div>
+
+        <button
+          id="locationBtn"
+          class="location"
+        >
+          📍 Get my device location
+        </button>
+
+
+        <!-- GPS RESULT -->
+
+        <div id="gpsResult" class="hidden">
+
+          <div class="row">
+            <span class="label">Latitude</span>
+            <span
+              class="value mono"
+              id="latitude"
+            >—</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Longitude</span>
+            <span
+              class="value mono"
+              id="longitude"
+            >—</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Accuracy</span>
+            <span
+              class="value"
+              id="accuracy"
+            >—</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Location Timestamp</span>
+            <span
+              class="value"
+              id="locationTimestamp"
+            >—</span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           SEND
+           ================================================= -->
+
+      <div class="section">
+
+        <div class="section-title">
+          📤 Send Diagnostics
+        </div>
+
+        <div class="notice">
+
+          The information displayed above will only be sent to the
+          configured webhook when you press <strong>Send diagnostics</strong>.
+
+          Device location is included only if you previously granted
+          location permission and obtained a location.
+
+        </div>
+
+        <button
+          id="sendBtn"
+          class="primary"
+        >
+          Send diagnostics
+        </button>
+
+        <button
+          id="declineBtn"
+          class="secondary"
+        >
+          Don't send
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         STATUS
+         ===================================================== -->
+
+    <div
+      id="status"
+      class="status"
+    ></div>
+
   </div>
-
-  <div class="loading" id="loading">
-    Looking up your connection information…
-  </div>
-
-
-  <!-- =========================================
-       IP INFORMATION
-       ========================================= -->
-
-  <div class="result" id="result">
-
-    <div class="section-title">
-      Internet / IP Information
-    </div>
-
-    <div class="row">
-      <span class="label">IP Address</span>
-      <span class="value" id="ip">—</span>
-    </div>
-
-    <div class="row">
-      <span class="label">ISP / Org</span>
-      <span class="value" id="isp">—</span>
-    </div>
-
-    <div class="row">
-      <span class="label">City</span>
-      <span class="value" id="city">—</span>
-    </div>
-
-    <div class="row">
-      <span class="label">Region</span>
-      <span class="value" id="region">—</span>
-    </div>
-
-    <div class="row">
-      <span class="label">Country</span>
-      <span class="value" id="country">—</span>
-    </div>
-
-
-    <!-- =========================================
-         DEVICE LOCATION
-         ========================================= -->
-
-    <div class="section-title">
-      Device Location
-    </div>
-
-    <div class="location-notice">
-      <strong>Optional GPS location</strong><br><br>
-
-      If you choose "Use my device location", your browser will ask
-      for permission to access the location provided by your device.
-      This may use GPS, Wi-Fi, mobile networks, or other device
-      location services.
-
-      <br><br>
-
-      Your location will NOT be requested unless you press the button.
-    </div>
-
-    <button
-      id="locationBtn"
-      class="location"
-    >
-      📍 Use my device location
-    </button>
-
-
-    <!-- =========================================
-         GPS RESULT
-         ========================================= -->
-
-    <div id="gpsResult" style="display:none;">
-
-      <div class="row">
-        <span class="label">Latitude</span>
-        <span
-          class="value coordinates"
-          id="latitude"
-        >—</span>
-      </div>
-
-      <div class="row">
-        <span class="label">Longitude</span>
-        <span
-          class="value coordinates"
-          id="longitude"
-        >—</span>
-      </div>
-
-      <div class="row">
-        <span class="label">Accuracy</span>
-        <span
-          class="value"
-          id="accuracy"
-        >—</span>
-      </div>
-
-      <div class="row">
-        <span class="label">Location time</span>
-        <span
-          class="value"
-          id="locationTime"
-        >—</span>
-      </div>
-
-    </div>
-
-
-    <!-- =========================================
-         SEND BUTTON
-         ========================================= -->
-
-    <button
-      id="sendBtn"
-      disabled
-    >
-      Send my info
-    </button>
-
-    <button
-      id="declineBtn"
-      class="secondary"
-    >
-      No thanks
-    </button>
-
-  </div>
-
-  <div
-    class="status"
-    id="status"
-  ></div>
 
 </div>
 
 
 <script>
 
-/* =========================================================
+/* ============================================================
    CONFIGURATION
-   ========================================================= */
+   ============================================================ */
 
 const WEBHOOK_URL =
   "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE";
 
 
-/* =========================================================
+/* ============================================================
    ELEMENTS
-   ========================================================= */
+   ============================================================ */
+
+const loading =
+  document.getElementById("loading");
+
+const diagnostics =
+  document.getElementById("diagnostics");
+
+const status =
+  document.getElementById("status");
 
 const sendBtn =
   document.getElementById("sendBtn");
@@ -341,33 +678,390 @@ const declineBtn =
 const locationBtn =
   document.getElementById("locationBtn");
 
-const resultEl =
-  document.getElementById("result");
-
-const loadingEl =
-  document.getElementById("loading");
-
-const statusEl =
-  document.getElementById("status");
-
-const gpsResultEl =
+const gpsResult =
   document.getElementById("gpsResult");
 
 
-/* =========================================================
-   STORE DATA
-   ========================================================= */
+/* ============================================================
+   DATA OBJECT
+   ============================================================ */
 
-let connectionData = null;
+let diagnosticData = {
+  ip: null,
+  isp: null,
+  organization: null,
+  asn: null,
+
+  country: null,
+  countryCode: null,
+  region: null,
+  city: null,
+  postal: null,
+
+  ipLatitude: null,
+  ipLongitude: null,
+  ipTimezone: null,
+
+  browser: null,
+  platform: null,
+  userAgent: null,
+  language: null,
+  languages: null,
+  browserTimezone: null,
+  cookies: null,
+  doNotTrack: null,
+  online: null,
+
+  screenResolution: null,
+  availableScreen: null,
+  viewport: null,
+  pixelRatio: null,
+  colorScheme: null,
+  touchSupport: null,
+
+  cpuCores: null,
+  deviceMemory: null,
+  maxTouchPoints: null,
+  pdfViewer: null,
+
+  connectionType: null,
+  effectiveType: null,
+  downlink: null,
+  rtt: null,
+  saveData: null,
+
+  currentUrl: window.location.href,
+  referrer: document.referrer || null,
+  protocol: window.location.protocol,
+
+  latitude: null,
+  longitude: null,
+  accuracy: null,
+  locationSource: null,
+  locationTimestamp: null,
+
+  timestamp: new Date().toISOString()
+};
 
 
-/* =========================================================
-   LOAD IP INFORMATION
-   ========================================================= */
+/* ============================================================
+   HELPER
+   ============================================================ */
 
-async function loadConnectionInfo() {
+function setValue(id, value) {
 
-  loadingEl.style.display = "block";
+  document.getElementById(id).textContent =
+    value !== null &&
+    value !== undefined &&
+    value !== ""
+      ? value
+      : "Not available";
+
+}
+
+
+/* ============================================================
+   BROWSER DETECTION
+   ============================================================ */
+
+function detectBrowser() {
+
+  const ua = navigator.userAgent;
+
+  let browser = "Unknown";
+
+
+  if (/Edg\//i.test(ua)) {
+    browser = "Microsoft Edge";
+  }
+  else if (/OPR\//i.test(ua)) {
+    browser = "Opera";
+  }
+  else if (/Chrome\//i.test(ua)) {
+    browser = "Google Chrome";
+  }
+  else if (/Firefox\//i.test(ua)) {
+    browser = "Mozilla Firefox";
+  }
+  else if (/Safari\//i.test(ua) &&
+           !/Chrome\//i.test(ua)) {
+    browser = "Safari";
+  }
+
+
+  return browser;
+}
+
+
+/* ============================================================
+   COLLECT BROWSER INFORMATION
+   ============================================================ */
+
+function collectBrowserInfo() {
+
+  const connection =
+    navigator.connection ||
+    navigator.mozConnection ||
+    navigator.webkitConnection;
+
+
+  diagnosticData.browser =
+    detectBrowser();
+
+  diagnosticData.platform =
+    navigator.platform || null;
+
+  diagnosticData.userAgent =
+    navigator.userAgent || null;
+
+  diagnosticData.language =
+    navigator.language || null;
+
+  diagnosticData.languages =
+    navigator.languages
+      ? navigator.languages.join(", ")
+      : null;
+
+  diagnosticData.browserTimezone =
+    Intl.DateTimeFormat()
+      .resolvedOptions()
+      .timeZone || null;
+
+  diagnosticData.cookies =
+    navigator.cookieEnabled
+      ? "Yes"
+      : "No";
+
+  diagnosticData.doNotTrack =
+    navigator.doNotTrack === "1"
+      ? "Enabled"
+      : "Not enabled";
+
+  diagnosticData.online =
+    navigator.onLine
+      ? "Online"
+      : "Offline";
+
+
+  /* Screen */
+
+  diagnosticData.screenResolution =
+    `${screen.width} × ${screen.height}`;
+
+  diagnosticData.availableScreen =
+    `${screen.availWidth} × ${screen.availHeight}`;
+
+  diagnosticData.viewport =
+    `${window.innerWidth} × ${window.innerHeight}`;
+
+  diagnosticData.pixelRatio =
+    window.devicePixelRatio || 1;
+
+
+  diagnosticData.colorScheme =
+    window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches
+      ? "Dark"
+      : "Light";
+
+
+  diagnosticData.touchSupport =
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0
+      ? "Yes"
+      : "No";
+
+
+  /* Hardware */
+
+  diagnosticData.cpuCores =
+    navigator.hardwareConcurrency ||
+    null;
+
+  diagnosticData.deviceMemory =
+    navigator.deviceMemory
+      ? navigator.deviceMemory + " GB"
+      : null;
+
+  diagnosticData.maxTouchPoints =
+    navigator.maxTouchPoints ||
+    0;
+
+  diagnosticData.pdfViewer =
+    navigator.pdfViewerEnabled !== undefined
+      ? navigator.pdfViewerEnabled
+        ? "Yes"
+        : "No"
+      : null;
+
+
+  /* Connection */
+
+  if (connection) {
+
+    diagnosticData.connectionType =
+      connection.type || null;
+
+    diagnosticData.effectiveType =
+      connection.effectiveType || null;
+
+    diagnosticData.downlink =
+      connection.downlink !== undefined
+        ? connection.downlink + " Mbps"
+        : null;
+
+    diagnosticData.rtt =
+      connection.rtt !== undefined
+        ? connection.rtt + " ms"
+        : null;
+
+    diagnosticData.saveData =
+      connection.saveData !== undefined
+        ? connection.saveData
+          ? "Enabled"
+          : "Disabled"
+        : null;
+  }
+
+
+  /* Page */
+
+  diagnosticData.currentUrl =
+    window.location.href;
+
+  diagnosticData.referrer =
+    document.referrer || null;
+
+  diagnosticData.protocol =
+    window.location.protocol;
+
+
+  displayBrowserInfo();
+}
+
+
+/* ============================================================
+   DISPLAY BROWSER INFORMATION
+   ============================================================ */
+
+function displayBrowserInfo() {
+
+  setValue("browser", diagnosticData.browser);
+  setValue("platform", diagnosticData.platform);
+  setValue("userAgent", diagnosticData.userAgent);
+  setValue("language", diagnosticData.language);
+  setValue("languages", diagnosticData.languages);
+  setValue(
+    "browserTimezone",
+    diagnosticData.browserTimezone
+  );
+  setValue("cookies", diagnosticData.cookies);
+  setValue("dnt", diagnosticData.doNotTrack);
+  setValue("online", diagnosticData.online);
+
+
+  setValue(
+    "screenResolution",
+    diagnosticData.screenResolution
+  );
+
+  setValue(
+    "availableScreen",
+    diagnosticData.availableScreen
+  );
+
+  setValue(
+    "viewport",
+    diagnosticData.viewport
+  );
+
+  setValue(
+    "pixelRatio",
+    diagnosticData.pixelRatio
+  );
+
+  setValue(
+    "colorScheme",
+    diagnosticData.colorScheme
+  );
+
+  setValue(
+    "touch",
+    diagnosticData.touchSupport
+  );
+
+
+  setValue(
+    "cpuCores",
+    diagnosticData.cpuCores
+  );
+
+  setValue(
+    "deviceMemory",
+    diagnosticData.deviceMemory
+  );
+
+  setValue(
+    "maxTouch",
+    diagnosticData.maxTouchPoints
+  );
+
+  setValue(
+    "pdfViewer",
+    diagnosticData.pdfViewer
+  );
+
+
+  setValue(
+    "connectionType",
+    diagnosticData.connectionType
+  );
+
+  setValue(
+    "effectiveType",
+    diagnosticData.effectiveType
+  );
+
+  setValue(
+    "downlink",
+    diagnosticData.downlink
+  );
+
+  setValue(
+    "rtt",
+    diagnosticData.rtt
+  );
+
+  setValue(
+    "saveData",
+    diagnosticData.saveData
+  );
+
+
+  setValue(
+    "currentUrl",
+    diagnosticData.currentUrl
+  );
+
+  setValue(
+    "referrer",
+    diagnosticData.referrer
+  );
+
+  setValue(
+    "protocol",
+    diagnosticData.protocol
+  );
+
+}
+
+
+/* ============================================================
+   IP LOOKUP
+   ============================================================ */
+
+async function loadIPInformation() {
 
   try {
 
@@ -375,83 +1069,90 @@ async function loadConnectionInfo() {
       await fetch("https://ipwho.is/");
 
     if (!response.ok) {
-      throw new Error("IP lookup failed");
+      throw new Error(
+        "IP request failed"
+      );
     }
 
     const data =
       await response.json();
 
+
     if (data.success === false) {
       throw new Error(
-        data.message || "IP lookup failed"
+        data.message ||
+        "IP lookup failed"
       );
     }
 
 
-    /* ---------------------------------------------
-       Store IP data
-       --------------------------------------------- */
+    /* --------------------------------------------
+       Basic IP information
+       -------------------------------------------- */
 
-    connectionData = {
+    diagnosticData.ip =
+      data.ip || null;
 
-      ip: data.ip || null,
+    diagnosticData.country =
+      data.country || null;
 
-      isp:
-        data.connection &&
-        data.connection.isp
-          ? data.connection.isp
-          : null,
+    diagnosticData.countryCode =
+      data.country_code || null;
 
-      city:
-        data.city || null,
+    diagnosticData.region =
+      data.region || null;
 
-      region:
-        data.region || null,
+    diagnosticData.city =
+      data.city || null;
 
-      country:
-        data.country || null,
-
-      latitude: null,
-
-      longitude: null,
-
-      accuracy: null,
-
-      locationSource: null,
-
-      timestamp:
-        new Date().toISOString()
-    };
+    diagnosticData.postal =
+      data.postal || null;
 
 
-    /* ---------------------------------------------
-       Display IP data
-       --------------------------------------------- */
+    /* --------------------------------------------
+       IP coordinates
+       -------------------------------------------- */
 
-    document.getElementById("ip").textContent =
-      connectionData.ip || "—";
+    diagnosticData.ipLatitude =
+      data.latitude || null;
 
-    document.getElementById("isp").textContent =
-      connectionData.isp || "—";
-
-    document.getElementById("city").textContent =
-      connectionData.city || "—";
-
-    document.getElementById("region").textContent =
-      connectionData.region || "—";
-
-    document.getElementById("country").textContent =
-      connectionData.country || "—";
+    diagnosticData.ipLongitude =
+      data.longitude || null;
 
 
-    loadingEl.style.display = "none";
+    /* --------------------------------------------
+       Timezone
+       -------------------------------------------- */
 
-    resultEl.style.display = "block";
+    diagnosticData.ipTimezone =
+      data.timezone &&
+      data.timezone.id
+        ? data.timezone.id
+        : null;
 
-    sendBtn.disabled = false;
 
-    statusEl.textContent =
-      "IP information loaded.";
+    /* --------------------------------------------
+       Connection
+       -------------------------------------------- */
+
+    if (data.connection) {
+
+      diagnosticData.isp =
+        data.connection.isp || null;
+
+      diagnosticData.organization =
+        data.connection.org || null;
+
+      diagnosticData.asn =
+        data.connection.asn || null;
+    }
+
+
+    displayIPInformation();
+
+
+    status.textContent =
+      "Diagnostics loaded successfully.";
 
   }
   catch (error) {
@@ -461,26 +1162,92 @@ async function loadConnectionInfo() {
       error
     );
 
-    loadingEl.textContent =
-      "Unable to retrieve connection information.";
-
-    statusEl.textContent =
-      "Please try again later.";
+    status.textContent =
+      "Browser diagnostics loaded, but IP lookup failed.";
 
   }
 
 }
 
 
-/* =========================================================
-   REQUEST DEVICE / GPS LOCATION
-   ========================================================= */
+/* ============================================================
+   DISPLAY IP INFORMATION
+   ============================================================ */
+
+function displayIPInformation() {
+
+  setValue(
+    "ip",
+    diagnosticData.ip
+  );
+
+  setValue(
+    "isp",
+    diagnosticData.isp
+  );
+
+  setValue(
+    "organization",
+    diagnosticData.organization
+  );
+
+  setValue(
+    "asn",
+    diagnosticData.asn
+  );
+
+  setValue(
+    "country",
+    diagnosticData.country
+  );
+
+  setValue(
+    "countryCode",
+    diagnosticData.countryCode
+  );
+
+  setValue(
+    "region",
+    diagnosticData.region
+  );
+
+  setValue(
+    "city",
+    diagnosticData.city
+  );
+
+  setValue(
+    "postal",
+    diagnosticData.postal
+  );
+
+  setValue(
+    "ipLatitude",
+    diagnosticData.ipLatitude
+  );
+
+  setValue(
+    "ipLongitude",
+    diagnosticData.ipLongitude
+  );
+
+  setValue(
+    "ipTimezone",
+    diagnosticData.ipTimezone
+  );
+
+}
+
+
+/* ============================================================
+   DEVICE LOCATION
+   ============================================================ */
 
 function requestDeviceLocation() {
 
   if (!navigator.geolocation) {
 
-    statusEl.textContent =
+    status.textContent =
       "Geolocation is not supported by this browser.";
 
     return;
@@ -490,10 +1257,10 @@ function requestDeviceLocation() {
   locationBtn.disabled = true;
 
   locationBtn.textContent =
-    "Requesting device location…";
+    "Requesting device location...";
 
-  statusEl.textContent =
-    "Please respond to your browser's location permission request.";
+  status.textContent =
+    "Please respond to the browser location permission request.";
 
 
   navigator.geolocation.getCurrentPosition(
@@ -504,70 +1271,56 @@ function requestDeviceLocation() {
         position.coords;
 
 
-      /* ---------------------------------------------
-         Get GPS/location information
-         --------------------------------------------- */
-
-      const latitude =
+      diagnosticData.latitude =
         coords.latitude;
 
-      const longitude =
+      diagnosticData.longitude =
         coords.longitude;
 
-      const accuracy =
+      diagnosticData.accuracy =
         coords.accuracy;
 
-
-      /* ---------------------------------------------
-         Store location
-         --------------------------------------------- */
-
-      if (!connectionData) {
-
-        connectionData = {};
-
-      }
-
-      connectionData.latitude =
-        latitude;
-
-      connectionData.longitude =
-        longitude;
-
-      connectionData.accuracy =
-        accuracy;
-
-      connectionData.locationSource =
+      diagnosticData.locationSource =
         "Browser Geolocation API";
 
-
-      /* ---------------------------------------------
-         Display location
-         --------------------------------------------- */
-
-      document.getElementById(
-        "latitude"
-      ).textContent =
-        latitude.toFixed(6);
-
-      document.getElementById(
-        "longitude"
-      ).textContent =
-        longitude.toFixed(6);
-
-      document.getElementById(
-        "accuracy"
-      ).textContent =
-        Math.round(accuracy) + " meters";
-
-      document.getElementById(
-        "locationTime"
-      ).textContent =
-        new Date().toLocaleString();
+      diagnosticData.locationTimestamp =
+        new Date(
+          position.timestamp
+        ).toISOString();
 
 
-      gpsResultEl.style.display =
-        "block";
+      /* --------------------------------------------
+         Display GPS information
+         -------------------------------------------- */
+
+      setValue(
+        "latitude",
+        coords.latitude.toFixed(6)
+      );
+
+      setValue(
+        "longitude",
+        coords.longitude.toFixed(6)
+      );
+
+      setValue(
+        "accuracy",
+        Math.round(
+          coords.accuracy
+        ) + " meters"
+      );
+
+      setValue(
+        "locationTimestamp",
+        new Date(
+          position.timestamp
+        ).toLocaleString()
+      );
+
+
+      gpsResult.classList.remove(
+        "hidden"
+      );
 
 
       locationBtn.textContent =
@@ -576,8 +1329,7 @@ function requestDeviceLocation() {
       locationBtn.disabled =
         false;
 
-
-      statusEl.textContent =
+      status.textContent =
         "Device location obtained successfully.";
 
     },
@@ -598,40 +1350,42 @@ function requestDeviceLocation() {
         "📍 Try device location again";
 
 
-      switch (error.code) {
+      if (
+        error.code ===
+        error.PERMISSION_DENIED
+      ) {
 
-        case error.PERMISSION_DENIED:
+        status.textContent =
+          "Location permission was denied.";
 
-          statusEl.textContent =
-            "Location permission was denied.";
+      }
+      else if (
+        error.code ===
+        error.POSITION_UNAVAILABLE
+      ) {
 
-          break;
+        status.textContent =
+          "Device location is unavailable.";
 
+      }
+      else if (
+        error.code ===
+        error.TIMEOUT
+      ) {
 
-        case error.POSITION_UNAVAILABLE:
+        status.textContent =
+          "Location request timed out.";
 
-          statusEl.textContent =
-            "Device location is currently unavailable.";
+      }
+      else {
 
-          break;
-
-
-        case error.TIMEOUT:
-
-          statusEl.textContent =
-            "Location request timed out.";
-
-          break;
-
-
-        default:
-
-          statusEl.textContent =
-            "Unable to obtain device location.";
+        status.textContent =
+          "Unable to obtain device location.";
 
       }
 
     },
+
 
     {
       enableHighAccuracy: true,
@@ -644,9 +1398,9 @@ function requestDeviceLocation() {
 }
 
 
-/* =========================================================
+/* ============================================================
    LOCATION BUTTON
-   ========================================================= */
+   ============================================================ */
 
 locationBtn.addEventListener(
   "click",
@@ -654,20 +1408,11 @@ locationBtn.addEventListener(
 );
 
 
-/* =========================================================
-   SEND INFORMATION
-   ========================================================= */
+/* ============================================================
+   SEND DIAGNOSTICS
+   ============================================================ */
 
-async function sendConnectionInfo() {
-
-  if (!connectionData) {
-
-    statusEl.textContent =
-      "Connection information is not available.";
-
-    return;
-  }
-
+async function sendDiagnostics() {
 
   if (
     !WEBHOOK_URL ||
@@ -675,7 +1420,7 @@ async function sendConnectionInfo() {
       "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE"
   ) {
 
-    statusEl.textContent =
+    status.textContent =
       "Webhook is not configured.";
 
     return;
@@ -688,11 +1433,15 @@ async function sendConnectionInfo() {
 
   locationBtn.disabled = true;
 
-  statusEl.textContent =
-    "Sending your information…";
+  status.textContent =
+    "Sending diagnostics...";
 
 
   try {
+
+    diagnosticData.timestamp =
+      new Date().toISOString();
+
 
     const response =
       await fetch(
@@ -710,7 +1459,7 @@ async function sendConnectionInfo() {
 
           body:
             JSON.stringify(
-              connectionData
+              diagnosticData
             )
         }
       );
@@ -719,15 +1468,19 @@ async function sendConnectionInfo() {
     if (!response.ok) {
 
       throw new Error(
-        "Webhook returned HTTP " +
+        "HTTP " +
         response.status
       );
 
     }
 
 
-    statusEl.textContent =
-      "Done. Your information was sent to the link owner.";
+    status.textContent =
+      "✓ Diagnostics sent successfully.";
+
+    status.classList.add(
+      "success"
+    );
 
   }
   catch (error) {
@@ -737,62 +1490,92 @@ async function sendConnectionInfo() {
       error
     );
 
-    statusEl.textContent =
-      "Information was displayed, but sending failed.";
 
-    sendBtn.disabled = false;
+    status.textContent =
+      "Failed to send diagnostics.";
 
-    declineBtn.disabled = false;
+    sendBtn.disabled =
+      false;
 
-    locationBtn.disabled = false;
+    declineBtn.disabled =
+      false;
+
+    locationBtn.disabled =
+      false;
 
   }
 
 }
 
 
-/* =========================================================
+/* ============================================================
    SEND BUTTON
-   ========================================================= */
+   ============================================================ */
 
 sendBtn.addEventListener(
   "click",
-  sendConnectionInfo
+  sendDiagnostics
 );
 
 
-/* =========================================================
-   DECLINE BUTTON
-   ========================================================= */
+/* ============================================================
+   DON'T SEND
+   ============================================================ */
 
 declineBtn.addEventListener(
   "click",
-  () => {
+  function() {
 
-    connectionData = null;
+    status.textContent =
+      "Diagnostics were not sent.";
 
-    sendBtn.disabled = true;
+    sendBtn.disabled =
+      true;
 
-    declineBtn.disabled = true;
+    declineBtn.disabled =
+      true;
 
-    locationBtn.disabled = true;
-
-    statusEl.textContent =
-      "No information was sent.";
+    locationBtn.disabled =
+      true;
 
   }
 );
 
 
-/* =========================================================
-   AUTOMATIC IP LOOKUP ON PAGE LOAD
-   ========================================================= */
+/* ============================================================
+   PAGE LOAD
+   ============================================================ */
 
 document.addEventListener(
   "DOMContentLoaded",
-  () => {
+  async function() {
 
-    loadConnectionInfo();
+    /*
+     * Browser information does not require
+     * an external API.
+     */
+
+    collectBrowserInfo();
+
+
+    /*
+     * IP information is loaded automatically.
+     */
+
+    await loadIPInformation();
+
+
+    /*
+     * Show page after diagnostics are loaded.
+     */
+
+    loading.classList.add(
+      "hidden"
+    );
+
+    diagnostics.classList.remove(
+      "hidden"
+    );
 
   }
 );
