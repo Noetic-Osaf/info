@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Device Info Demo (Consent-Based)</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --accent: #6ea8fe;
+    --text: #e8e9ec;
+    --muted: #9aa0ab;
+    --border: #2a2e37;
+    --good: #4caf7d;
+    --warn: #e0a94c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; }
+  .notice {
+    background: #1e2530;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    font-size: 1rem;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  td { padding: 6px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td:first-child { color: var(--muted); width: 40%; }
+  button {
+    background: var(--accent);
+    color: #0f1115;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.88rem;
+    margin-top: 6px;
+  }
+  button:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status { font-size: 0.85rem; margin-top: 8px; color: var(--muted); }
+  .status.granted { color: var(--good); }
+  .status.denied { color: #e06c6c; }
+  video, img.preview {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    display: block;
+  }
+  input[type=file] {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  #micLevel {
+    height: 10px;
+    background: var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  #micLevelBar {
+    height: 100%;
+    width: 0%;
+    background: var(--good);
+    transition: width 0.08s linear;
+  }
+</style>
+</head>
+<body>
+
+<h1>Device &amp; Permissions Demo</h1>
+<div class="subtitle">A transparent example of what browsers can and can't tell a website.</div>
+
+<div class="notice">
+  Nothing on this page happens silently. Auto-detected info below is public/non-sensitive
+  browser data. Location, camera, microphone, and photo access all require you to click a
+  button and approve the browser's own permission popup — this page cannot bypass that,
+  and neither can any website.
+</div>
+
+<div class="card">
+  <h2>🖥️ Auto-detected browser &amp; device info</h2>
+  <table id="autoInfo"></table>
+</div>
+
+<div class="card">
+  <h2>📍 Location</h2>
+  <button id="locBtn">Request location</button>
+  <div class="status" id="locStatus">Not requested yet.</div>
+  <table id="locInfo"></table>
+</div>
+
+<div class="card">
+  <h2>🎥 Camera</h2>
+  <button id="camBtn">Request camera</button>
+  <div class="status" id="camStatus">Not requested yet.</div>
+  <video id="camPreview" autoplay playsinline style="display:none;"></video>
+</div>
+
+<div class="card">
+  <h2>🎤 Microphone</h2>
+  <button id="micBtn">Request microphone</button>
+  <div class="status" id="micStatus">Not requested yet.</div>
+  <div id="micLevel" style="display:none;"><div id="micLevelBar"></div></div>
+</div>
+
+<div class="card">
+  <h2>🖼️ Photo preview (you choose the file — no gallery scanning exists)</h2>
+  <input type="file" id="fileInput" accept="image/*">
+  <img id="filePreview" class="preview" style="display:none;">
+</div>
+
+<script>
+// ---------- Auto-detected info (public, non-sensitive) ----------
+const autoInfo = document.getElementById('autoInfo');
+const facts = {
+  "User agent": navigator.userAgent,
+  "Platform": navigator.platform || "n/a",
+  "Language": navigator.language,
+  "Screen size": `${screen.width} x ${screen.height}`,
+  "Viewport size": `${window.innerWidth} x ${window.innerHeight}`,
+  "Color depth": `${screen.colorDepth}-bit`,
+  "Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
+  "Device memory (approx)": navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "not reported",
+  "CPU cores (approx)": navigator.hardwareConcurrency || "not reported",
+  "Touch support": ('ontouchstart' in window) ? "Yes" : "No",
+  "Cookies enabled": navigator.cookieEnabled ? "Yes" : "No",
+  "Online": navigator.onLine ? "Yes" : "No",
+};
+for (const [k, v] of Object.entries(facts)) {
+  autoInfo.innerHTML += `<tr><td>${k}</td><td>${v}</td></tr>`;
+}
+
+// ---------- Location ----------
+document.getElementById('locBtn').addEventListener('click', () => {
+  const status = document.getElementById('locStatus');
+  const table = document.getElementById('locInfo');
+  status.textContent = "Requesting — check your browser's permission popup...";
+  status.className = "status";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      status.textContent = "Permission granted.";
+      status.className = "status granted";
+      table.innerHTML = `
+        <tr><td>Latitude</td><td>${pos.coords.latitude}</td></tr>
+        <tr><td>Longitude</td><td>${pos.coords.longitude}</td></tr>
+        <tr><td>Accuracy</td><td>${pos.coords.accuracy} meters</td></tr>
+      `;
+    },
+    (err) => {
+      status.textContent = "Permission denied or unavailable: " + err.message;
+      status.className = "status denied";
+    }
+  );
+});
+
+// ---------- Camera ----------
+document.getElementById('camBtn').addEventListener('click', async () => {
+  const status = document.getElementById('camStatus');
+  const video = document.getElementById('camPreview');
+  status.textContent = "Requesting — check your browser's permission popup...";
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    video.style.display = "block";
+    status.textContent = "Permission granted. Live preview below (not recorded or sent anywhere).";
+    status.className = "status granted";
+  } catch (err) {
+    status.textContent = "Permission denied or unavailable: " + err.message;
+    status.className = "status denied";
+  }
+});
+
+// ---------- Microphone ----------
+document.getElementById('micBtn').addEventListener('click', async () => {
+  const status = document.getElementById('micStatus');
+  const levelWrap = document.getElementById('micLevel');
+  const levelBar = document.getElementById('micLevelBar');
+  status.textContent = "Requesting — check your browser's permission popup...";
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    status.textContent = "Permission granted. Live volume meter below (not recorded or sent anywhere).";
+    status.className = "status granted";
+    levelWrap.style.display = "block";
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+
+    function update() {
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length;
+      levelBar.style.width = Math.min(100, avg * 1.5) + "%";
+      requestAnimationFrame(update);
+    }
+    update();
+  } catch (err) {
+    status.textContent = "Permission denied or unavailable: " + err.message;
+    status.className = "status denied";
+  }
+});
+
+// ---------- Photo preview (user-chosen file only) ----------
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const img = document.getElementById('filePreview');
+  if (file) {
+    img.src = URL.createObjectURL(file);
+    img.style.display = "block";
+  }
+});
+</script>
+
+</body>
+</html>
