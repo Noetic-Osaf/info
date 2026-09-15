@@ -39,7 +39,7 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 32px;
-    max-width: 420px;
+    max-width: 480px;
     width: 100%;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   }
@@ -66,6 +66,16 @@
     margin-bottom: 20px;
   }
 
+  .location-notice {
+    background: rgba(95, 211, 138, 0.08);
+    border: 1px solid rgba(95, 211, 138, 0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 20px;
+  }
+
   button {
     width: 100%;
     padding: 14px;
@@ -90,9 +100,23 @@
     margin-top: 10px;
   }
 
+  button.location {
+    background: transparent;
+    border: 1px solid var(--success);
+    color: var(--success);
+    margin-top: 10px;
+  }
+
   .result {
     margin-top: 20px;
     display: none;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 8px;
   }
 
   .row {
@@ -131,6 +155,11 @@
     font-size: 14px;
     padding: 10px 0;
   }
+
+  .coordinates {
+    font-family: monospace;
+    font-size: 12px;
+  }
 </style>
 </head>
 
@@ -142,23 +171,28 @@
 
   <p class="desc">
     This page can look up your public IP address, internet provider (ISP),
-    and approximate city-level location. It does not access your exact
-    address or GPS position.
+    and approximate city-level location based on your IP address.
   </p>
 
   <div class="notice">
-    Your connection information will be looked up automatically when this
-    page loads. Nothing will be sent to the link owner unless you choose
-    to send it.
+    Your IP-based connection information is looked up automatically when
+    this page loads. Device GPS/location is NOT accessed automatically.
   </div>
 
-  <!-- Loading message -->
   <div class="loading" id="loading">
     Looking up your connection information…
   </div>
 
-  <!-- Result -->
+
+  <!-- =========================================
+       IP INFORMATION
+       ========================================= -->
+
   <div class="result" id="result">
+
+    <div class="section-title">
+      Internet / IP Information
+    </div>
 
     <div class="row">
       <span class="label">IP Address</span>
@@ -185,18 +219,101 @@
       <span class="value" id="country">—</span>
     </div>
 
+
+    <!-- =========================================
+         DEVICE LOCATION
+         ========================================= -->
+
+    <div class="section-title">
+      Device Location
+    </div>
+
+    <div class="location-notice">
+      <strong>Optional GPS location</strong><br><br>
+
+      If you choose "Use my device location", your browser will ask
+      for permission to access the location provided by your device.
+      This may use GPS, Wi-Fi, mobile networks, or other device
+      location services.
+
+      <br><br>
+
+      Your location will NOT be requested unless you press the button.
+    </div>
+
+    <button
+      id="locationBtn"
+      class="location"
+    >
+      📍 Use my device location
+    </button>
+
+
+    <!-- =========================================
+         GPS RESULT
+         ========================================= -->
+
+    <div id="gpsResult" style="display:none;">
+
+      <div class="row">
+        <span class="label">Latitude</span>
+        <span
+          class="value coordinates"
+          id="latitude"
+        >—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Longitude</span>
+        <span
+          class="value coordinates"
+          id="longitude"
+        >—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Accuracy</span>
+        <span
+          class="value"
+          id="accuracy"
+        >—</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Location time</span>
+        <span
+          class="value"
+          id="locationTime"
+        >—</span>
+      </div>
+
+    </div>
+
+
+    <!-- =========================================
+         SEND BUTTON
+         ========================================= -->
+
+    <button
+      id="sendBtn"
+      disabled
+    >
+      Send my info
+    </button>
+
+    <button
+      id="declineBtn"
+      class="secondary"
+    >
+      No thanks
+    </button>
+
   </div>
 
-  <!-- Buttons -->
-  <button id="sendBtn" disabled>
-    Send my info
-  </button>
-
-  <button id="declineBtn" class="secondary">
-    No thanks
-  </button>
-
-  <div class="status" id="status"></div>
+  <div
+    class="status"
+    id="status"
+  ></div>
 
 </div>
 
@@ -207,35 +324,45 @@
    CONFIGURATION
    ========================================================= */
 
-// Put your Formspree/webhook endpoint here.
-//
-// Example:
-// const WEBHOOK_URL = "https://formspree.io/f/xxxxxxxx";
-//
-const WEBHOOK_URL = "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE";
+const WEBHOOK_URL =
+  "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE";
 
 
 /* =========================================================
    ELEMENTS
    ========================================================= */
 
-const sendBtn = document.getElementById("sendBtn");
-const declineBtn = document.getElementById("declineBtn");
+const sendBtn =
+  document.getElementById("sendBtn");
 
-const resultEl = document.getElementById("result");
-const loadingEl = document.getElementById("loading");
-const statusEl = document.getElementById("status");
+const declineBtn =
+  document.getElementById("declineBtn");
+
+const locationBtn =
+  document.getElementById("locationBtn");
+
+const resultEl =
+  document.getElementById("result");
+
+const loadingEl =
+  document.getElementById("loading");
+
+const statusEl =
+  document.getElementById("status");
+
+const gpsResultEl =
+  document.getElementById("gpsResult");
 
 
 /* =========================================================
-   STORE LOOKUP DATA
+   STORE DATA
    ========================================================= */
 
 let connectionData = null;
 
 
 /* =========================================================
-   LOOK UP CONNECTION INFORMATION
+   LOAD IP INFORMATION
    ========================================================= */
 
 async function loadConnectionInfo() {
@@ -244,21 +371,25 @@ async function loadConnectionInfo() {
 
   try {
 
-    const response = await fetch("https://ipwho.is/");
+    const response =
+      await fetch("https://ipwho.is/");
 
     if (!response.ok) {
       throw new Error("IP lookup failed");
     }
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (data.success === false) {
-      throw new Error(data.message || "IP lookup failed");
+      throw new Error(
+        data.message || "IP lookup failed"
+      );
     }
 
 
     /* ---------------------------------------------
-       Store data
+       Store IP data
        --------------------------------------------- */
 
     connectionData = {
@@ -271,19 +402,30 @@ async function loadConnectionInfo() {
           ? data.connection.isp
           : null,
 
-      city: data.city || null,
+      city:
+        data.city || null,
 
-      region: data.region || null,
+      region:
+        data.region || null,
 
-      country: data.country || null,
+      country:
+        data.country || null,
 
-      timestamp: new Date().toISOString()
+      latitude: null,
 
+      longitude: null,
+
+      accuracy: null,
+
+      locationSource: null,
+
+      timestamp:
+        new Date().toISOString()
     };
 
 
     /* ---------------------------------------------
-       Display data
+       Display IP data
        --------------------------------------------- */
 
     document.getElementById("ip").textContent =
@@ -302,10 +444,6 @@ async function loadConnectionInfo() {
       connectionData.country || "—";
 
 
-    /* ---------------------------------------------
-       Show result
-       --------------------------------------------- */
-
     loadingEl.style.display = "none";
 
     resultEl.style.display = "block";
@@ -313,15 +451,18 @@ async function loadConnectionInfo() {
     sendBtn.disabled = false;
 
     statusEl.textContent =
-      "Information loaded. Choose whether to send it.";
+      "IP information loaded.";
 
+  }
+  catch (error) {
 
-  } catch (error) {
-
-    console.error("Lookup error:", error);
+    console.error(
+      "IP lookup error:",
+      error
+    );
 
     loadingEl.textContent =
-      "Unable to retrieve your connection information.";
+      "Unable to retrieve connection information.";
 
     statusEl.textContent =
       "Please try again later.";
@@ -329,6 +470,188 @@ async function loadConnectionInfo() {
   }
 
 }
+
+
+/* =========================================================
+   REQUEST DEVICE / GPS LOCATION
+   ========================================================= */
+
+function requestDeviceLocation() {
+
+  if (!navigator.geolocation) {
+
+    statusEl.textContent =
+      "Geolocation is not supported by this browser.";
+
+    return;
+  }
+
+
+  locationBtn.disabled = true;
+
+  locationBtn.textContent =
+    "Requesting device location…";
+
+  statusEl.textContent =
+    "Please respond to your browser's location permission request.";
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position) {
+
+      const coords =
+        position.coords;
+
+
+      /* ---------------------------------------------
+         Get GPS/location information
+         --------------------------------------------- */
+
+      const latitude =
+        coords.latitude;
+
+      const longitude =
+        coords.longitude;
+
+      const accuracy =
+        coords.accuracy;
+
+
+      /* ---------------------------------------------
+         Store location
+         --------------------------------------------- */
+
+      if (!connectionData) {
+
+        connectionData = {};
+
+      }
+
+      connectionData.latitude =
+        latitude;
+
+      connectionData.longitude =
+        longitude;
+
+      connectionData.accuracy =
+        accuracy;
+
+      connectionData.locationSource =
+        "Browser Geolocation API";
+
+
+      /* ---------------------------------------------
+         Display location
+         --------------------------------------------- */
+
+      document.getElementById(
+        "latitude"
+      ).textContent =
+        latitude.toFixed(6);
+
+      document.getElementById(
+        "longitude"
+      ).textContent =
+        longitude.toFixed(6);
+
+      document.getElementById(
+        "accuracy"
+      ).textContent =
+        Math.round(accuracy) + " meters";
+
+      document.getElementById(
+        "locationTime"
+      ).textContent =
+        new Date().toLocaleString();
+
+
+      gpsResultEl.style.display =
+        "block";
+
+
+      locationBtn.textContent =
+        "✓ Device location obtained";
+
+      locationBtn.disabled =
+        false;
+
+
+      statusEl.textContent =
+        "Device location obtained successfully.";
+
+    },
+
+
+    function(error) {
+
+      console.error(
+        "Geolocation error:",
+        error
+      );
+
+
+      locationBtn.disabled =
+        false;
+
+      locationBtn.textContent =
+        "📍 Try device location again";
+
+
+      switch (error.code) {
+
+        case error.PERMISSION_DENIED:
+
+          statusEl.textContent =
+            "Location permission was denied.";
+
+          break;
+
+
+        case error.POSITION_UNAVAILABLE:
+
+          statusEl.textContent =
+            "Device location is currently unavailable.";
+
+          break;
+
+
+        case error.TIMEOUT:
+
+          statusEl.textContent =
+            "Location request timed out.";
+
+          break;
+
+
+        default:
+
+          statusEl.textContent =
+            "Unable to obtain device location.";
+
+      }
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+
+  );
+
+}
+
+
+/* =========================================================
+   LOCATION BUTTON
+   ========================================================= */
+
+locationBtn.addEventListener(
+  "click",
+  requestDeviceLocation
+);
 
 
 /* =========================================================
@@ -343,20 +666,19 @@ async function sendConnectionInfo() {
       "Connection information is not available.";
 
     return;
-
   }
 
 
   if (
     !WEBHOOK_URL ||
-    WEBHOOK_URL === "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE"
+    WEBHOOK_URL ===
+      "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE"
   ) {
 
     statusEl.textContent =
       "Webhook is not configured.";
 
     return;
-
   }
 
 
@@ -364,33 +686,41 @@ async function sendConnectionInfo() {
 
   declineBtn.disabled = true;
 
+  locationBtn.disabled = true;
+
   statusEl.textContent =
     "Sending your information…";
 
 
   try {
 
-    const response = await fetch(WEBHOOK_URL, {
+    const response =
+      await fetch(
+        WEBHOOK_URL,
+        {
+          method: "POST",
 
-      method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
 
-      headers: {
+            "Accept":
+              "application/json"
+          },
 
-        "Content-Type": "application/json",
-
-        "Accept": "application/json"
-
-      },
-
-      body: JSON.stringify(connectionData)
-
-    });
+          body:
+            JSON.stringify(
+              connectionData
+            )
+        }
+      );
 
 
     if (!response.ok) {
 
       throw new Error(
-        "Webhook returned HTTP " + response.status
+        "Webhook returned HTTP " +
+        response.status
       );
 
     }
@@ -399,17 +729,22 @@ async function sendConnectionInfo() {
     statusEl.textContent =
       "Done. Your information was sent to the link owner.";
 
+  }
+  catch (error) {
 
-  } catch (error) {
-
-    console.error("Webhook error:", error);
+    console.error(
+      "Webhook error:",
+      error
+    );
 
     statusEl.textContent =
-      "The information was displayed, but sending failed.";
+      "Information was displayed, but sending failed.";
 
     sendBtn.disabled = false;
 
     declineBtn.disabled = false;
+
+    locationBtn.disabled = false;
 
   }
 
@@ -420,40 +755,47 @@ async function sendConnectionInfo() {
    SEND BUTTON
    ========================================================= */
 
-sendBtn.addEventListener("click", () => {
-
-  sendConnectionInfo();
-
-});
+sendBtn.addEventListener(
+  "click",
+  sendConnectionInfo
+);
 
 
 /* =========================================================
    DECLINE BUTTON
    ========================================================= */
 
-declineBtn.addEventListener("click", () => {
+declineBtn.addEventListener(
+  "click",
+  () => {
 
-  connectionData = null;
+    connectionData = null;
 
-  sendBtn.disabled = true;
+    sendBtn.disabled = true;
 
-  declineBtn.disabled = true;
+    declineBtn.disabled = true;
 
-  statusEl.textContent =
-    "No information was sent.";
+    locationBtn.disabled = true;
 
-});
+    statusEl.textContent =
+      "No information was sent.";
+
+  }
+);
 
 
 /* =========================================================
-   AUTOMATICALLY LOAD INFO WHEN PAGE OPENS
+   AUTOMATIC IP LOOKUP ON PAGE LOAD
    ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
 
-  loadConnectionInfo();
+    loadConnectionInfo();
 
-});
+  }
+);
 
 </script>
 
